@@ -1,9 +1,11 @@
 package com.example.workmanager_tutorial
 
+import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import androidx.work.*
+import java.util.concurrent.TimeUnit
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -18,44 +20,47 @@ class MainActivity : AppCompatActivity() {
         workManager.enqueue(workRequest)
 
         //1회성
-        //val workRequest = OneTimeWorkRequest.from(ExampleWorker::class.java)
+        val workRequest1 = OneTimeWorkRequest.from(ExampleWorker::class.java)
 
         //반복
-        //val workRequest = OneTimeWorkRequestBuilder<ExampleWorker>(15, TimeUnit.MINUTES).build()
+        val workRequest2 = PeriodicWorkRequestBuilder<ExampleWorker>(15, TimeUnit.MINUTES).build()
 
-        /*제약 조건
+        //제약 조건
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)//네트워크 연결상태
             .setRequiresCharging(true)//충전상태
             .build()
-        val workRequest2 = OneTimeWorkRequestBuilder<ExampleWorker>()
+        val workRequest3 = OneTimeWorkRequestBuilder<ExampleWorker>()
             .setConstraints(constraints)
-            .build()*/
+            .build()
 
-        //작업 연결(3 이후 4 실행)
-        //val workRequest3 = OneTimeWorkRequestBuilder<ExampleWorker>().build()
-        //val workRequest4 = OneTimeWorkRequestBuilder<ExampleWorker>().build()
-        //workManager.apply { beginWith(workRequest3).then(workRequest4).enqueue() }
+        //작업 연결(4 이후 5 실행)
+        val workRequest4 = OneTimeWorkRequestBuilder<ExampleWorker>().build()
+        val workRequest5 = OneTimeWorkRequestBuilder<ExampleWorker>().build()
+        workManager.apply { beginWith(workRequest4).then(workRequest5).enqueue() }
 
         //데이터 전달
-        //val input = mapOf("a" to 100)
-        /*val workRequest5 = OneTimeWorkRequestBuilder<ExampleWorker>()
+        val input = mapOf("a" to 100)
+        val inputData = Data.Builder().putAll(input).build()
+        val workRequest6 = OneTimeWorkRequestBuilder<ExampleWorker>()
             .setInputData(inputData)
-            .build()*/
+            .build()
 
         //작업 취소
-        //workManager.cancelWorkById(workRequest.id)
+        workManager.cancelWorkById(workRequest.id)
 
         /*유일한 작업.
         작업에 유일한 이름을 부여해 큐에 넣거나 조회, 취소 가능.
         KEEP: 작업1이 실행 대기중이거나 실행중이면 작업2는 큐에 추가되지 않음.
         REPLACE: 작업1을 취소하고 작업2를 큐에 추가.
-        APPEND: 작업2를 BLOCKED(대기)로 바꾸고, 작업1이 완료되면 작업2를 큐에 추가.
-        val config = workManager.beginUniqueWork("string", ExistingWorkPolicy.KEEP, workRequest)*/
+        APPEND: 작업2를 BLOCKED(대기)로 바꾸고, 작업1이 완료되면 작업2를 큐에 추가.*/
+        val config = workManager.beginUniqueWork("string", ExistingWorkPolicy.KEEP, workRequest)
     }
 }
 
-class ExampleWorker: Worker() {
+class ExampleWorker(context: Context, workerParams: WorkerParameters) : Worker(context,
+    workerParams
+) {
     override fun doWork(): Result {
         //처리해야할 작업
         return if(isStopped) {
